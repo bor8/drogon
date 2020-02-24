@@ -109,6 +109,7 @@ enum HttpMethod
     Put,
     Delete,
     Options,
+    Connect,
     Invalid
 };
 
