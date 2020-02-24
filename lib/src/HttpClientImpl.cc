@@ -93,13 +93,6 @@ HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
 {
 }
 
-HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
-                               const std::string &hostString)
-    : loop_(loop)
-{
-    updateViaHostString(hostString);
-}
-
 void HttpClientImpl::updateViaHostString(const std::string &hostString)
 {
     auto lowerHost = hostString;
@@ -189,6 +182,13 @@ void HttpClientImpl::updateViaHostString(const std::string &hostString)
         }
     }
     LOG_TRACE << "userSSL=" << useSSL_ << " domain=" << domain_;
+}
+
+HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
+                               const std::string &hostString)
+    : loop_(loop)
+{
+    updateViaHostString(hostString);
 }
 
 HttpClientImpl::~HttpClientImpl()
