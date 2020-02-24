@@ -173,7 +173,7 @@ void HttpRequestImpl::appendToBuffer(trantor::MsgBuffer *output) const
         case Options:
             output->append("OPTIONS ");
             break;
-        case Options:
+        case Connect:
             output->append("CONNECT ");
             break;
         default:
