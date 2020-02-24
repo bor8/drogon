@@ -173,6 +173,9 @@ void HttpRequestImpl::appendToBuffer(trantor::MsgBuffer *output) const
         case Options:
             output->append("OPTIONS ");
             break;
+        case Options:
+            output->append("CONNECT ");
+            break;
         default:
             return;
     }
@@ -583,6 +586,10 @@ bool HttpRequestImpl::setMethod(const char *start, const char *end)
             if (m == "OPTIONS")
             {
                 method_ = Options;
+            }
+            else if (m == "CONNECT")
+            {
+                method_ = Connect;
             }
             else
             {
