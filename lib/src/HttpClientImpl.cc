@@ -94,8 +94,13 @@ HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
 }
 
 HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
-                               const std::string &hostString)
+                               std::string &hostString)
     : loop_(loop)
+{
+    updateViaHostString(hostString);
+}
+
+void HttpClientImpl::updateViaHostString(std::string &hostString)
 {
     auto lowerHost = hostString;
     std::transform(lowerHost.begin(),
@@ -448,7 +453,7 @@ HttpClientPtr HttpClient::newHttpClient(const std::string &ip,
         useSSL);
 }
 
-HttpClientPtr HttpClient::newHttpClient(const std::string &hostString,
+HttpClientPtr HttpClient::newHttpClient(std::string &hostString,
                                         trantor::EventLoop *loop)
 {
     return std::make_shared<HttpClientImpl>(
