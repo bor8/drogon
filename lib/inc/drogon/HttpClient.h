@@ -181,7 +181,7 @@ class HttpClient : public trantor::NonCopyable
      * method.
      *
      */
-    static HttpClientPtr newHttpClient(const std::string &hostString,
+    static HttpClientPtr newHttpClientProxy(const std::string &hostString,
                                        trantor::EventLoop *loop = nullptr,
                                        const std::string &httpConnectProxy = "");
 

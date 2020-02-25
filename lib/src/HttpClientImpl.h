@@ -32,8 +32,7 @@ class HttpClientImpl : public HttpClient,
   public:
     HttpClientImpl(trantor::EventLoop *loop,
                    const trantor::InetAddress &addr,
-                   bool useSSL = false,
-                   const std::string &httpConnectProxy = "");
+                   bool useSSL = false);
     HttpClientImpl(trantor::EventLoop *loop,
                    const std::string &hostString,
                    const std::string &httpConnectProxy = "");

@@ -89,11 +89,11 @@ void HttpClientImpl::createTcpClient()
 HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
                                const trantor::InetAddress &addr,
                                bool useSSL)
-    : loop_(loop), serverAddr_(addr), useSSL_(useSSL)
+    : loop_(loop), serverAddr_(addr), useSSL_(useSSL))
 {
 }
 
-HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
+HttpClientImpl::HttpClientImplProxy(trantor::EventLoop *loop,
                                const std::string &hostString
                                const std::string &httpConnectProxy = "")
     : loop_(loop), hostString_(hostString), httpConnectProxy_(httpConnectProxy)
@@ -102,7 +102,8 @@ HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
     {
         auto lowerHost = httpConnectProxy;
     }
-    else {
+    else
+    {
         auto lowerHost = hostString;
     }
     std::transform(lowerHost.begin(),
@@ -456,7 +457,7 @@ HttpClientPtr HttpClient::newHttpClient(const std::string &ip,
 }
 
 
-HttpClientPtr HttpClient::newHttpClient(const std::string &hostString,
+HttpClientPtr HttpClient::newHttpClientProxy(const std::string &hostString,
                                         trantor::EventLoop *loop,
                                         const std::string &httpConnectProxy = "")
 {
