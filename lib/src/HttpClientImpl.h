@@ -32,8 +32,11 @@ class HttpClientImpl : public HttpClient,
   public:
     HttpClientImpl(trantor::EventLoop *loop,
                    const trantor::InetAddress &addr,
-                   bool useSSL = false);
-    HttpClientImpl(trantor::EventLoop *loop, const std::string &hostString);
+                   bool useSSL = false,
+                   const std::string &httpConnectProxy = "");
+    HttpClientImpl(trantor::EventLoop *loop,
+                   const std::string &hostString,
+                   const std::string &httpConnectProxy = "");
     virtual void sendRequest(const HttpRequestPtr &req,
                              const HttpReqCallback &callback) override;
     virtual void sendRequest(const HttpRequestPtr &req,
@@ -78,6 +81,8 @@ class HttpClientImpl : public HttpClient,
     trantor::EventLoop *loop_;
     trantor::InetAddress serverAddr_;
     bool useSSL_;
+    std::string httpConnectProxy_;
+    std::string hostString_;
     void sendReq(const trantor::TcpConnectionPtr &connPtr,
                  const HttpRequestPtr &req);
     void sendRequestInLoop(const HttpRequestPtr &req,
