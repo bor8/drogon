@@ -780,7 +780,7 @@ void HttpAppFrameworkImpl::forward(
             }
             else
             {
-                clientPtr = std::make_shared<HttpClientImplProxy>(
+                clientPtr = std::make_shared<HttpClientImpl>(
                     trantor::EventLoop::getEventLoopOfCurrentThread()
                         ? trantor::EventLoop::getEventLoopOfCurrentThread()
                         : getLoop(),
