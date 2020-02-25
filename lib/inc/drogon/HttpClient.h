@@ -156,6 +156,8 @@ class HttpClient : public trantor::NonCopyable
     virtual size_t bytesSent() const = 0;
     virtual size_t bytesReceived() const = 0;
 
+    virtual void updateViaHostString(const std::string &hostString) = 0;
+
     /// Create a Http client using the hostString to connect to server
     /**
      *
