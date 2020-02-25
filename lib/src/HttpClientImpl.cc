@@ -224,7 +224,14 @@ void HttpClientImpl::sendRequestInLoop(const drogon::HttpRequestPtr &req,
         // req->addHeader("Accept", "*/*");
         if (!domain_.empty())
         {
-            req->addHeader("Host", domain_);
+            if (req->method() == Connect)
+            {
+                req->addHeader("Host", req->path());
+            }
+            else
+            {
+                req->addHeader("Host", domain_);
+            }
         }
         req->addHeader("User-Agent", "DrogonClient");
     }
