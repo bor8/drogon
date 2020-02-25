@@ -94,10 +94,17 @@ HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
 }
 
 HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
-                               const std::string &hostString)
-    : loop_(loop)
+                               const std::string &hostString
+                               const std::string &httpConnectProxy = "")
+    : loop_(loop), hostString_(hostString), httpConnectProxy_(httpConnectProxy)
 {
-    auto lowerHost = hostString;
+    if (httpConnectProxy != "")
+    {
+        auto lowerHost = httpConnectProxy;
+    }
+    else {
+        auto lowerHost = hostString;
+    }
     std::transform(lowerHost.begin(),
                    lowerHost.end(),
                    lowerHost.begin(),
@@ -448,12 +455,15 @@ HttpClientPtr HttpClient::newHttpClient(const std::string &ip,
         useSSL);
 }
 
+
 HttpClientPtr HttpClient::newHttpClient(const std::string &hostString,
-                                        trantor::EventLoop *loop)
+                                        trantor::EventLoop *loop,
+                                        const std::string &httpConnectProxy = "")
 {
     return std::make_shared<HttpClientImpl>(
         loop == nullptr ? HttpAppFrameworkImpl::instance().getLoop() : loop,
-        hostString);
+        hostString,
+        httpConnectProxy);
 }
 
 void HttpClientImpl::onError(ReqResult result)
