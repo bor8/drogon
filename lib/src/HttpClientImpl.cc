@@ -89,7 +89,7 @@ void HttpClientImpl::createTcpClient()
 HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
                                const trantor::InetAddress &addr,
                                bool useSSL)
-    : loop_(loop), serverAddr_(addr), useSSL_(useSSL))
+    : loop_(loop), serverAddr_(addr), useSSL_(useSSL)
 {
 }
 
