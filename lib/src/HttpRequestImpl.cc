@@ -182,7 +182,15 @@ void HttpRequestImpl::appendToBuffer(trantor::MsgBuffer *output) const
 
     if (!path_.empty())
     {
-        output->append(utils::urlEncode(path_));
+        // Hack:
+        if (method_ == Connect)
+        {
+            output->append(path_);
+        }
+        else
+        {
+            output->append(utils::urlEncode(path_));
+        }
     }
     else
     {
