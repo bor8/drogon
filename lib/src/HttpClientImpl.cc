@@ -94,7 +94,7 @@ HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
 }
 
 HttpClientImpl::HttpClientImplProxy(trantor::EventLoop *loop,
-                               const std::string &hostString
+                               const std::string &hostString,
                                const std::string &httpConnectProxy = "")
     : loop_(loop), hostString_(hostString), httpConnectProxy_(httpConnectProxy)
 {
