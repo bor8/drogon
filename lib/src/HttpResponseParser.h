@@ -66,6 +66,7 @@ class HttpResponseParser : public trantor::NonCopyable
     bool processResponseLine(const char *begin, const char *end);
 
     HttpResponseParseStatus status_;
+    std::string statusMessage_;
     HttpResponseImplPtr responsePtr_;
     bool parseResponseForHeadMethod_{false};
 };

@@ -679,7 +679,7 @@ void HttpAppFrameworkImpl::onAsyncRequest(
     {
         auto resp = HttpResponse::newHttpResponse();
         resp->setContentTypeCode(ContentType::CT_TEXT_PLAIN);
-        resp->addHeader("ALLOW", "GET,HEAD,POST,PUT,DELETE,OPTIONS");
+        resp->addHeader("ALLOW", "GET,HEAD,POST,PUT,DELETE,OPTIONS,CONNECT");
         resp->setExpiredTime(0);
         callback(resp);
         return;
@@ -781,10 +781,11 @@ void HttpAppFrameworkImpl::forward(
             else
             {
                 clientPtr = std::make_shared<HttpClientImpl>(
+                    HttpClient::ConstructViaHostString{},
                     trantor::EventLoop::getEventLoopOfCurrentThread()
                         ? trantor::EventLoop::getEventLoopOfCurrentThread()
                         : getLoop(),
-                    hostString);
+                    hostString);  // TODO: reverse proxy over http connect proxy! =)
                 clientsMap[hostString] = clientPtr;
             }
         }

@@ -77,7 +77,9 @@ void SimpleReverseProxy::preRouting(const HttpRequestPtr &req,
     {
         auto &addr = backendAddrs_[index % backendAddrs_.size()];
         clientPtr = HttpClient::newHttpClient(
-            addr, trantor::EventLoop::getEventLoopOfCurrentThread());
+            HttpClient::ConstructViaHostString{},
+            addr,
+            trantor::EventLoop::getEventLoopOfCurrentThread());
         clientPtr->setPipeliningDepth(pipeliningDepth_);
     }
     req->setPassThrough(true);

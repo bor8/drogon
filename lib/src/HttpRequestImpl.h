@@ -44,6 +44,7 @@ class HttpRequestImpl : public HttpRequest
     }
     void reset()
     {
+        LOG_DEBUG << "dude!!!";
         method_ = Invalid;
         version_ = Version::kUnknown;
         contentLen_ = 0;

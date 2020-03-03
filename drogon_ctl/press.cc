@@ -215,7 +215,7 @@ void press::createRequestAndClients()
     for (size_t i = 0; i < numOfConnections_; ++i)
     {
         auto client =
-            HttpClient::newHttpClient(host_, loopPool_->getNextLoop());
+            HttpClient::newHttpClient(HttpClient::ConstructViaHostString{}, host_, loopPool_->getNextLoop());
         client->enableCookies();
         clients_.push_back(client);
     }

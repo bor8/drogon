@@ -173,11 +173,19 @@ void HttpRequestImpl::appendToBuffer(trantor::MsgBuffer *output) const
         case Options:
             output->append("OPTIONS ");
             break;
+        case Connect:
+            output->append("CONNECT ");
+            break;
         default:
             return;
     }
 
-    if (!path_.empty())
+    if (method_ == Connect)
+    {
+        // output->append(serverAddr_.toIpPort())  // serverAddr_ is not available here!
+        output->append(path_);
+    }
+    else if (!path_.empty())
     {
         output->append(utils::urlEncode(path_));
     }
@@ -584,6 +592,10 @@ bool HttpRequestImpl::setMethod(const char *start, const char *end)
             {
                 method_ = Options;
             }
+            else if (m == "CONNECT")
+            {
+                method_ = Connect;
+            }
             else
             {
                 method_ = Invalid;
@@ -607,6 +619,7 @@ bool HttpRequestImpl::setMethod(const char *start, const char *end)
 
 HttpRequestImpl::~HttpRequestImpl()
 {
+    delete loop_;
 }
 
 void HttpRequestImpl::reserveBodySize()

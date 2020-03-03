@@ -1,4 +1,4 @@
-﻿/**
+/**
  *
  *  test.cc
  *  An Tao
@@ -1110,7 +1110,8 @@ int main(int argc, char *argv[])
     do
     {
         std::promise<int> pro1;
-        auto client = HttpClient::newHttpClient("http://127.0.0.1:8848",
+        auto client = HttpClient::newHttpClient(HttpClient::ConstructViaHostString{},
+                                                "http://127.0.0.1:8848",
                                                 loop[0].getLoop());
         client->setPipeliningDepth(10);
         if (sessionID)
@@ -1119,7 +1120,8 @@ int main(int argc, char *argv[])
         if (app().supportSSL())
         {
             std::promise<int> pro2;
-            auto sslClient = HttpClient::newHttpClient("127.0.0.1",
+            auto sslClient = HttpClient::newHttpClient(HttpClient::ConstructViaIp{},
+                                                       "127.0.0.1",
                                                        8849,
                                                        true,
                                                        loop[1].getLoop());

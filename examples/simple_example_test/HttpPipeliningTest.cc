@@ -7,7 +7,7 @@ using namespace drogon;
 int main()
 {
     trantor::Logger::setLogLevel(trantor::Logger::kTrace);
-    auto client = HttpClient::newHttpClient("127.0.0.1", 8848);
+    auto client = HttpClient::newHttpClient(HttpClient::ConstructViaIp{}, "127.0.0.1", 8848);
     client->setPipeliningDepth(64);
     int counter = -1;
     int n = 0;

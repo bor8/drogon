@@ -86,111 +86,231 @@ void HttpClientImpl::createTcpClient()
     tcpClientPtr_->connect();
 }
 
-HttpClientImpl::HttpClientImpl(trantor::EventLoop *loop,
+void HttpClientImpl::stopLoop()
+{
+    /*auto connPtr = tcpClientPtr_->connection();
+    if (connPtr)
+    {
+        LOG_DEBUG<<"didi...";
+        //connPtr->forceClose();
+        //connPtr->close();
+        //connPtr->reset();
+        connPtr->shutdown();
+    }*/
+    stopLoop_ = true;
+}
+
+HttpClientImpl::HttpClientImpl(ConstructViaIp,
+                               trantor::EventLoop *loop,
                                const trantor::InetAddress &addr,
                                bool useSSL)
     : loop_(loop), serverAddr_(addr), useSSL_(useSSL)
 {
+    stopLoop_ = false;
 }
 
-HttpClientImpl::HttpClientImplProxy(trantor::EventLoop *loop,
+
+HttpClientImpl::HttpClientImpl(ConstructViaHostString,
+                               trantor::EventLoop *loop,
                                const std::string &hostString,
-                               const std::string &httpConnectProxy = "")
+                               const std::string &httpConnectProxy)
     : loop_(loop), hostString_(hostString), httpConnectProxy_(httpConnectProxy)
 {
+    stopLoop_ = false;
+    
+    // Attention: code duplication! 1...:
+    
     if (httpConnectProxy != "")
     {
         auto lowerHost = httpConnectProxy;
+        std::transform(lowerHost.begin(),
+                       lowerHost.end(),
+                       lowerHost.begin(),
+                       tolower);
+        if (lowerHost.find("https://") != std::string::npos)
+        {
+            useSSL_ = true;
+            lowerHost = lowerHost.substr(8);
+        }
+        else if (lowerHost.find("http://") != std::string::npos)
+        {
+            useSSL_ = false;
+            lowerHost = lowerHost.substr(7);
+        }
+        else
+        {
+            return;
+        }
+        auto pos = lowerHost.find(']');
+        if (lowerHost[0] == '[' && pos != std::string::npos)
+        {
+            // ipv6
+            domain_ = lowerHost.substr(1, pos - 1);
+            if (lowerHost[pos + 1] == ':')
+            {
+                auto portStr = lowerHost.substr(pos + 2);
+                pos = portStr.find('/');
+                if (pos != std::string::npos)
+                {
+                    portStr = portStr.substr(0, pos);
+                }
+                auto port = atoi(portStr.c_str());
+                if (port > 0 && port < 65536)
+                {
+                    serverAddr_ = InetAddress(domain_, port, true);
+                }
+            }
+            else
+            {
+                if (useSSL_)
+                {
+                    serverAddr_ = InetAddress(domain_, 443, true);
+                }
+                else
+                {
+                    serverAddr_ = InetAddress(domain_, 80, true);
+                }
+            }
+        }
+        else
+        {
+            auto pos = lowerHost.find(':');
+            if (pos != std::string::npos)
+            {
+                domain_ = lowerHost.substr(0, pos);
+                auto portStr = lowerHost.substr(pos + 1);
+                pos = portStr.find('/');
+                if (pos != std::string::npos)
+                {
+                    portStr = portStr.substr(0, pos);
+                }
+                auto port = atoi(portStr.c_str());
+                if (port > 0 && port < 65536)
+                {
+                    serverAddr_ = InetAddress(domain_, port);
+                }
+            }
+            else
+            {
+                domain_ = lowerHost;
+                pos = domain_.find('/');
+                if (pos != std::string::npos)
+                {
+                    domain_ = domain_.substr(0, pos);
+                }
+                if (useSSL_)
+                {
+                    serverAddr_ = InetAddress(domain_, 443);
+                }
+                else
+                {
+                    serverAddr_ = InetAddress(domain_, 80);
+                }
+            }
+        }
     }
-    else
-    {
-        auto lowerHost = hostString;
-    }
-    std::transform(lowerHost.begin(),
-                   lowerHost.end(),
-                   lowerHost.begin(),
+    
+    // ...1. // Attention: code duplication! 2...:
+    
+    auto remoteLowerHost = hostString;
+    std::transform(remoteLowerHost.begin(),
+                   remoteLowerHost.end(),
+                   remoteLowerHost.begin(),
                    tolower);
-    if (lowerHost.find("https://") != std::string::npos)
+    if (remoteLowerHost.find("https://") != std::string::npos)
     {
-        useSSL_ = true;
-        lowerHost = lowerHost.substr(8);
+        remoteUseSSL_ = true;
+        remoteLowerHost = remoteLowerHost.substr(8);
     }
-    else if (lowerHost.find("http://") != std::string::npos)
+    else if (remoteLowerHost.find("http://") != std::string::npos)
     {
-        useSSL_ = false;
-        lowerHost = lowerHost.substr(7);
+        remoteUseSSL_ = false;
+        remoteLowerHost = remoteLowerHost.substr(7);
     }
     else
     {
         return;
     }
-    auto pos = lowerHost.find(']');
-    if (lowerHost[0] == '[' && pos != std::string::npos)
+    auto remotePos = remoteLowerHost.find(']');
+    if (remoteLowerHost[0] == '[' && remotePos != std::string::npos)
     {
         // ipv6
-        domain_ = lowerHost.substr(1, pos - 1);
-        if (lowerHost[pos + 1] == ':')
+        remoteDomain_ = remoteLowerHost.substr(1, remotePos - 1);
+        if (remoteLowerHost[remotePos + 1] == ':')
         {
-            auto portStr = lowerHost.substr(pos + 2);
-            pos = portStr.find('/');
-            if (pos != std::string::npos)
+            auto remotePortStr = remoteLowerHost.substr(remotePos + 2);
+            remotePos = remotePortStr.find('/');
+            if (remotePos != std::string::npos)
             {
-                portStr = portStr.substr(0, pos);
+                remotePortStr = remotePortStr.substr(0, remotePos);
             }
-            auto port = atoi(portStr.c_str());
-            if (port > 0 && port < 65536)
+            auto remotePort = atoi(remotePortStr.c_str());
+            if (remotePort > 0 && remotePort < 65536)
             {
-                serverAddr_ = InetAddress(domain_, port, true);
+                remoteServerAddr_ = InetAddress(remoteDomain_, remotePort, true);
             }
         }
         else
         {
-            if (useSSL_)
+            if (remoteUseSSL_)
             {
-                serverAddr_ = InetAddress(domain_, 443, true);
+                remoteServerAddr_ = InetAddress(remoteDomain_, 443, true);
             }
             else
             {
-                serverAddr_ = InetAddress(domain_, 80, true);
+                remoteServerAddr_ = InetAddress(remoteDomain_, 80, true);
             }
         }
     }
     else
     {
-        auto pos = lowerHost.find(':');
-        if (pos != std::string::npos)
+        auto remotePos = remoteLowerHost.find(':');
+        if (remotePos != std::string::npos)
         {
-            domain_ = lowerHost.substr(0, pos);
-            auto portStr = lowerHost.substr(pos + 1);
-            pos = portStr.find('/');
-            if (pos != std::string::npos)
+            remoteDomain_ = remoteLowerHost.substr(0, remotePos);
+            auto remotePortStr = remoteLowerHost.substr(remotePos + 1);
+            remotePos = remotePortStr.find('/');
+            if (remotePos != std::string::npos)
             {
-                portStr = portStr.substr(0, pos);
+                remotePortStr = remotePortStr.substr(0, remotePos);
             }
-            auto port = atoi(portStr.c_str());
-            if (port > 0 && port < 65536)
+            auto remotePort = atoi(remotePortStr.c_str());
+            if (remotePort > 0 && remotePort < 65536)
             {
-                serverAddr_ = InetAddress(domain_, port);
+                remoteServerAddr_ = InetAddress(remoteDomain_, remotePort);
             }
         }
         else
         {
-            domain_ = lowerHost;
-            pos = domain_.find('/');
-            if (pos != std::string::npos)
+            remoteDomain_ = remoteLowerHost;
+            remotePos = remoteDomain_.find('/');
+            if (remotePos != std::string::npos)
             {
-                domain_ = domain_.substr(0, pos);
+                remoteDomain_ = remoteDomain_.substr(0, remotePos);
             }
-            if (useSSL_)
+            if (remoteUseSSL_)
             {
-                serverAddr_ = InetAddress(domain_, 443);
+                remoteServerAddr_ = InetAddress(remoteDomain_, 443);
             }
             else
             {
-                serverAddr_ = InetAddress(domain_, 80);
+                remoteServerAddr_ = InetAddress(remoteDomain_, 80);
             }
         }
     }
+    
+    // ...2. // Attention: code duplication!
+    
+    // port portStr pos
+    // domain_ serverAddr_ useSSL_
+    
+    if (httpConnectProxy == "")
+    {
+        domain_ = remoteDomain_;
+        serverAddr_ = remoteServerAddr_;
+        useSSL_ = remoteUseSSL_;
+    }
+    
     LOG_TRACE << "userSSL=" << useSSL_ << " domain=" << domain_;
 }
 
@@ -221,11 +341,26 @@ void HttpClientImpl::sendRequestInLoop(const drogon::HttpRequestPtr &req,
                                        const drogon::HttpReqCallback &callback)
 {
     loop_->assertInLoopThread();
+    LOG_DEBUG<<"tada111";
+    if (stopLoop_ == true)
+    {
+        LOG_DEBUG<<"tada222";
+        //requestsBuffer_.pop();
+        //callback(ReqResult::Ok, nullptr);
+        //assert(requestsBuffer_.empty());
+        //loop_->quit();
+        //loop_ = NULL;
+        //return;
+    }
     if (!static_cast<drogon::HttpRequestImpl *>(req.get())->passThrough())
     {
         req->addHeader("Connection", "Keep-Alive");
         // req->addHeader("Accept", "*/*");
-        if (!domain_.empty())
+        if (httpConnectProxy_ != "")
+        {
+            req->addHeader("Host", remoteDomain_);
+        }
+        else if (!domain_.empty())
         {
             req->addHeader("Host", domain_);
         }
@@ -381,24 +516,28 @@ void HttpClientImpl::onRecvMessage(const trantor::TcpConnectionPtr &connPtr,
 {
     auto responseParser = connPtr->getContext<HttpResponseParser>();
 
-    // LOG_TRACE << "###:" << msg->readableBytes();
+    LOG_DEBUG << "###:" << msg->readableBytes();
     auto msgSize = msg->readableBytes();
     while (msg->readableBytes() > 0)
     {
+        LOG_DEBUG << "### in while";
         assert(!pipeliningCallbacks_.empty());
         auto &firstReq = pipeliningCallbacks_.front();
         if (firstReq.first->method() == Head)
         {
+            LOG_DEBUG << "### in if 1";
             responseParser->setForHeadMethod();
         }
         if (!responseParser->parseResponse(msg))
         {
+            LOG_DEBUG << "### in if 2";
             onError(ReqResult::BadResponse);
             bytesReceived_ += (msgSize - msg->readableBytes());
             return;
         }
         if (responseParser->gotAll())
         {
+            LOG_DEBUG << "### in if 3";
             auto resp = responseParser->responseImpl();
             responseParser->reset();
             assert(!pipeliningCallbacks_.empty());
@@ -433,6 +572,7 @@ void HttpClientImpl::onRecvMessage(const trantor::TcpConnectionPtr &connPtr,
             {
                 if (resp->ifCloseConnection() && pipeliningCallbacks_.empty())
                 {
+                    LOG_DEBUG << "### yippi close tcp";
                     tcpClientPtr_.reset();
                 }
             }
@@ -444,24 +584,28 @@ void HttpClientImpl::onRecvMessage(const trantor::TcpConnectionPtr &connPtr,
     }
 }
 
-HttpClientPtr HttpClient::newHttpClient(const std::string &ip,
+HttpClientPtr HttpClient::newHttpClient(ConstructViaIp,
+                                        const std::string &ip,
                                         uint16_t port,
                                         bool useSSL,
                                         trantor::EventLoop *loop)
 {
     bool isIpv6 = ip.find(':') == std::string::npos ? false : true;
     return std::make_shared<HttpClientImpl>(
+        HttpClient::ConstructViaIp{},
         loop == nullptr ? HttpAppFrameworkImpl::instance().getLoop() : loop,
         trantor::InetAddress(ip, port, isIpv6),
         useSSL);
 }
 
 
-HttpClientPtr HttpClient::newHttpClientProxy(const std::string &hostString,
+HttpClientPtr HttpClient::newHttpClient(ConstructViaHostString,
+                                        const std::string &hostString,
                                         trantor::EventLoop *loop,
-                                        const std::string &httpConnectProxy = "")
+                                        const std::string &httpConnectProxy)
 {
     return std::make_shared<HttpClientImpl>(
+        HttpClientImpl::ConstructViaHostString{},
         loop == nullptr ? HttpAppFrameworkImpl::instance().getLoop() : loop,
         hostString,
         httpConnectProxy);

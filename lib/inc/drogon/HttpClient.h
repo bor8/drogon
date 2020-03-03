@@ -130,6 +130,10 @@ class HttpClient : public trantor::NonCopyable
      */
     virtual void addCookie(const Cookie &cookie) = 0;
 
+    // https://stackoverflow.com/a/46775828/1707015
+    struct ConstructViaIp final {};
+    struct ConstructViaHostString final {};
+    
     /**
      * @brief Creaet a new HTTP client which use ip and port to connect to
      * server
@@ -144,7 +148,8 @@ class HttpClient : public trantor::NonCopyable
      * @return HttpClientPtr The smart pointer to the new client object.
      * @note: The ip parameter support for both ipv4 and ipv6 address
      */
-    static HttpClientPtr newHttpClient(const std::string &ip,
+    static HttpClientPtr newHttpClient(ConstructViaIp,
+                                       const std::string &ip,
                                        uint16_t port,
                                        bool useSSL = false,
                                        trantor::EventLoop *loop = nullptr);
@@ -181,10 +186,13 @@ class HttpClient : public trantor::NonCopyable
      * method.
      *
      */
-    static HttpClientPtr newHttpClientProxy(const std::string &hostString,
+    static HttpClientPtr newHttpClient(ConstructViaHostString,
+                                       const std::string &hostString,
                                        trantor::EventLoop *loop = nullptr,
                                        const std::string &httpConnectProxy = "");
 
+    virtual void stopLoop() = 0;
+    
     virtual ~HttpClient()
     {
     }

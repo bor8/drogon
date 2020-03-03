@@ -30,10 +30,12 @@ class HttpClientImpl : public HttpClient,
                        public std::enable_shared_from_this<HttpClientImpl>
 {
   public:
-    HttpClientImpl(trantor::EventLoop *loop,
+    HttpClientImpl(ConstructViaIp,
+                   trantor::EventLoop *loop,
                    const trantor::InetAddress &addr,
                    bool useSSL = false);
-    HttpClientImplProxy(trantor::EventLoop *loop,
+    HttpClientImpl(ConstructViaHostString,
+                   trantor::EventLoop *loop,
                    const std::string &hostString,
                    const std::string &httpConnectProxy = "");
     virtual void sendRequest(const HttpRequestPtr &req,
@@ -74,12 +76,14 @@ class HttpClientImpl : public HttpClient,
     {
         return bytesReceived_;
     }
+    
+    virtual void stopLoop() override;
 
   private:
     std::shared_ptr<trantor::TcpClient> tcpClientPtr_;
     trantor::EventLoop *loop_;
-    trantor::InetAddress serverAddr_;
-    bool useSSL_;
+    trantor::InetAddress serverAddr_, remoteServerAddr_;
+    bool useSSL_, remoteUseSSL_;
     std::string httpConnectProxy_;
     std::string hostString_;
     void sendReq(const trantor::TcpConnectionPtr &connPtr,
@@ -92,7 +96,7 @@ class HttpClientImpl : public HttpClient,
     std::queue<std::pair<HttpRequestPtr, HttpReqCallback>> requestsBuffer_;
     void onRecvMessage(const trantor::TcpConnectionPtr &, trantor::MsgBuffer *);
     void onError(ReqResult result);
-    std::string domain_;
+    std::string domain_, remoteDomain_;
     size_t pipeliningDepth_{0};
     bool enableCookies_{false};
     std::vector<Cookie> validCookies_;
@@ -100,6 +104,7 @@ class HttpClientImpl : public HttpClient,
     size_t bytesReceived_{0};
     bool dns_{false};
     std::shared_ptr<trantor::Resolver> resolverPtr_;
+    bool stopLoop_;
 };
 using HttpClientImplPtr = std::shared_ptr<HttpClientImpl>;
 }  // namespace drogon

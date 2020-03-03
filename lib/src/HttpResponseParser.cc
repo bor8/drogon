@@ -60,9 +60,10 @@ bool HttpResponseParser::processResponseLine(const char *begin, const char *end)
     {
         std::string status_code(start, space - start);
         std::string status_message(space + 1, end - space - 1);
-        LOG_TRACE << status_code << " " << status_message;
+        LOG_DEBUG << status_code << " " << status_message;  // // // wieder in TRACE aendern!
         auto code = atoi(status_code.c_str());
         responsePtr_->setStatusCode(HttpStatusCode(code));
+        statusMessage_ = status_message;
 
         return true;
     }
@@ -140,8 +141,15 @@ bool HttpResponseParser::parseResponse(MsgBuffer *buf)
                                 status_ = HttpResponseParseStatus::kGotAll;
                                 hasMore = false;
                             }
+                            else if (responsePtr_->statusCode() == k200OK &&
+                                     statusMessage_ == "Connection established")
+                            {
+                                status_ = HttpResponseParseStatus::kGotAll;
+                                hasMore = false;
+                            }
                             else
                             {
+                                LOG_DEBUG<<"Expect Close.";
                                 status_ = HttpResponseParseStatus::kExpectClose;
                                 hasMore = true;
                             }
@@ -195,10 +203,10 @@ bool HttpResponseParser::parseResponse(MsgBuffer *buf)
             if (responsePtr_->leftBodyLength_ == 0)
             {
                 status_ = HttpResponseParseStatus::kGotAll;
-                LOG_TRACE << "post got all:len="
+                LOG_DEBUG << "post got all:len="  // // //
                           << responsePtr_->leftBodyLength_;
                 // LOG_INFO<<"content:"<<request_->content_;
-                LOG_TRACE << "content(END)";
+                LOG_DEBUG << "content(END)";  // // //
                 hasMore = false;
             }
         }
@@ -223,8 +231,7 @@ bool HttpResponseParser::parseResponse(MsgBuffer *buf)
                 char *end;
                 responsePtr_->currentChunkLength_ =
                     strtol(len.c_str(), &end, 16);
-                // LOG_TRACE << "chun length : " <<
-                // responsePtr_->currentChunkLength_;
+                LOG_DEBUG << "chun length : " << responsePtr_->currentChunkLength_;  // // //
                 if (responsePtr_->currentChunkLength_ != 0)
                 {
                     status_ = HttpResponseParseStatus::kExpectChunkBody;
@@ -242,8 +249,7 @@ bool HttpResponseParser::parseResponse(MsgBuffer *buf)
         }
         else if (status_ == HttpResponseParseStatus::kExpectChunkBody)
         {
-            // LOG_TRACE<<"expect chunk
-            // len="<<responsePtr_->currentChunkLength_;
+            LOG_TRACE<<"expect chunk len="<<responsePtr_->currentChunkLength_;  // // //
             if (buf->readableBytes() >= (responsePtr_->currentChunkLength_ + 2))
             {
                 if (*(buf->peek() + responsePtr_->currentChunkLength_) ==
